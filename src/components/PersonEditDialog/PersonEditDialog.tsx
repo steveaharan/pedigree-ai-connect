@@ -5,7 +5,38 @@
 import React, { useState, useEffect } from 'react';
 import './PersonEditDialog.css';
 
-const PersonEditDialog = ({ 
+interface Disease {
+	type: string;
+	colour: string;
+}
+
+interface PersonData {
+	name: string;
+	display_name?: string;
+	age?: number | string;
+	dob?: string;
+	dod?: string;
+	sex: 'M' | 'F' | 'U';
+	status: string | number;
+	adopted_in?: boolean;
+	adopted_out?: boolean;
+	miscarriage?: boolean;
+	stillbirth?: boolean;
+	termination?: boolean;
+	yob?: number;
+	[key: string]: any;
+}
+
+interface PersonEditDialogProps {
+	isOpen: boolean;
+	onClose: () => void;
+	person: any;
+	diseases?: Disease[];
+	onSave: (data: PersonData) => void;
+	validationError?: string | null;
+}
+
+const PersonEditDialog: React.FC<PersonEditDialogProps> = ({ 
   isOpen, 
   onClose, 
   person, 
@@ -13,7 +44,7 @@ const PersonEditDialog = ({
   onSave,
   validationError = null
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PersonData>({
     name: '',
     display_name: '',
     age: '',
@@ -29,11 +60,11 @@ const PersonEditDialog = ({
     ...person?.data || {}
   });
 
-  const [diseaseAges, setDiseaseAges] = useState({});
-  const [activeTab, setActiveTab] = useState('basic');
+  const [diseaseAges, setDiseaseAges] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<string>('basic');
 
   // Helper function to format date input as DD/MM/YYYY
-  const formatDateInput = (value) => {
+  const formatDateInput = (value: string): string => {
     // Remove all non-numeric characters
     const numericValue = value.replace(/\D/g, '');
     
@@ -48,7 +79,7 @@ const PersonEditDialog = ({
   };
 
   // Helper function to calculate age from date of birth
-  const calculateAgeFromDOB = (dob) => {
+  const calculateAgeFromDOB = (dob: string): string => {
     if (!dob) return '';
     
     // Parse DD/MM/YYYY format
@@ -71,11 +102,11 @@ const PersonEditDialog = ({
       age--;
     }
     
-    return age >= 0 ? age : '';
+    return age >= 0 ? age.toString() : '';
   };
 
   // Helper function to convert DD/MM/YYYY to YYYY-MM-DD for date input
-  const convertToDateInputFormat = (ddmmyyyy) => {
+  const convertToDateInputFormat = (ddmmyyyy: string): string => {
     if (!ddmmyyyy) return '';
     const parts = ddmmyyyy.split('/');
     if (parts.length !== 3) return '';
@@ -84,7 +115,7 @@ const PersonEditDialog = ({
   };
 
   // Helper function to convert YYYY-MM-DD to DD/MM/YYYY
-  const convertFromDateInputFormat = (yyyymmdd) => {
+  const convertFromDateInputFormat = (yyyymmdd: string): string => {
     if (!yyyymmdd) return '';
     const [year, month, day] = yyyymmdd.split('-');
     return `${day}/${month}/${year}`;
@@ -92,7 +123,7 @@ const PersonEditDialog = ({
 
   useEffect(() => {
     if (person?.data) {
-      const initialData = {
+      const initialData: PersonData = {
         name: '',
         display_name: '',
         age: '',
@@ -122,7 +153,7 @@ const PersonEditDialog = ({
       setFormData(initialData);
 
       // Initialize disease ages
-      const ages = {};
+      const ages: Record<string, string> = {};
       diseases.forEach(disease => {
         const ageKey = `${disease.type}_diagnosis_age`;
         ages[disease.type] = person.data[ageKey] || '';
@@ -134,7 +165,7 @@ const PersonEditDialog = ({
     }
   }, [person, diseases]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => {
       const updated = {
         ...prev,
@@ -163,7 +194,7 @@ const PersonEditDialog = ({
     });
   };
 
-  const handleDatePickerChange = (value) => {
+  const handleDatePickerChange = (value: string) => {
     const formattedDate = convertFromDateInputFormat(value);
     setFormData(prev => ({
       ...prev,
@@ -172,7 +203,7 @@ const PersonEditDialog = ({
     }));
   };
 
-  const handleDeathDatePickerChange = (value) => {
+  const handleDeathDatePickerChange = (value: string) => {
     const formattedDate = convertFromDateInputFormat(value);
     setFormData(prev => ({
       ...prev,
@@ -180,7 +211,7 @@ const PersonEditDialog = ({
     }));
   };
 
-  const handleDiseaseAgeChange = (diseaseType, age) => {
+  const handleDiseaseAgeChange = (diseaseType: string, age: string) => {
     setDiseaseAges(prev => ({
       ...prev,
       [diseaseType]: age
@@ -189,16 +220,16 @@ const PersonEditDialog = ({
 
   const handleSave = () => {
     // Combine form data with disease ages
-    const updatedData = { ...formData };
+    const updatedData: PersonData = { ...formData };
     
     // Ensure status is a number
-    updatedData.status = parseInt(updatedData.status);
+    updatedData.status = parseInt(updatedData.status as string);
     
     // Handle date of birth and calculate age
     if (updatedData.dob) {
       // Always recalculate age from date of birth
       const calculatedAge = calculateAgeFromDOB(updatedData.dob);
-      updatedData.age = calculatedAge >= 0 ? calculatedAge : 0;
+      updatedData.age = calculatedAge !== '' ? parseInt(calculatedAge) : 0;
       
       // Also save year of birth for backward compatibility
       const parts = updatedData.dob.split('/');
@@ -222,7 +253,7 @@ const PersonEditDialog = ({
     onClose();
   };
 
-  const capitalizeFirstLetter = (str) => {
+  const capitalizeFirstLetter = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1).replace('_', ' ');
   };
 
@@ -353,19 +384,10 @@ const PersonEditDialog = ({
                 <div className="form-row">
                   <label htmlFor="dob">Date of Birth:</label>
                   <div className="date-input-group">
-                    {/* <input
-                      type="text"
-                      id="dob-text"
-                      value={formData.dob || ''}
-                      onChange={e => handleInputChange('dob', e.target.value)}
-                      placeholder="DD/MM/YYYY"
-                      maxLength="10"
-                      className="date-text-input"
-                    /> */}
                     <input
                       type="date"
                       id="dob-picker"
-                      value={convertToDateInputFormat(formData.dob)}
+                      value={convertToDateInputFormat(formData.dob || '')}
                       onChange={e => handleDatePickerChange(e.target.value)}
                       max={new Date().toISOString().split('T')[0]}
                       className="date-picker-input"
@@ -408,7 +430,7 @@ const PersonEditDialog = ({
                       <input
                         type="date"
                         id="dod-picker"
-                        value={convertToDateInputFormat(formData.dod)}
+                        value={convertToDateInputFormat(formData.dod || '')}
                         onChange={e => handleDeathDatePickerChange(e.target.value)}
                         max={new Date().toISOString().split('T')[0]}
                         className="date-picker-input"
@@ -489,4 +511,4 @@ const PersonEditDialog = ({
   );
 };
 
-export default PersonEditDialog;
+export default PersonEditDialog; 

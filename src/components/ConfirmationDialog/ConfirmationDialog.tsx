@@ -5,7 +5,18 @@
 import React from 'react';
 import './ConfirmationDialog.css';
 
-const ConfirmationDialog = ({ 
+interface ConfirmationDialogProps {
+	isOpen: boolean;
+	title?: string;
+	message: string;
+	confirmText?: string;
+	cancelText?: string;
+	onConfirm: () => void;
+	onCancel: () => void;
+	type?: 'warning' | 'danger' | 'info';
+}
+
+const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ 
 	isOpen, 
 	title = 'Confirm Action', 
 	message, 
@@ -17,13 +28,13 @@ const ConfirmationDialog = ({
 }) => {
 	if (!isOpen) return null;
 
-	const handleBackdropClick = (e) => {
+	const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
 		if (e.target === e.currentTarget) {
 			onCancel();
 		}
 	};
 
-	const handleKeyDown = (e) => {
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
 		if (e.key === 'Escape') {
 			onCancel();
 		} else if (e.key === 'Enter') {
@@ -67,4 +78,4 @@ const ConfirmationDialog = ({
 	);
 };
 
-export default ConfirmationDialog;
+export default ConfirmationDialog; 

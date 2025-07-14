@@ -1,12 +1,71 @@
 /**
 /* © 2024 University of Cambridge. All rights reserved.  
 **/
-import React, { useState } from 'react';
-import { pedigreejs, pedigreejs_zooming, pedigreejs_pedcache, pedigreejs_io, pedigreejs_utils } from "./pedigreejs.es.v3.0.0-rc8";
+import { useState, useEffect } from 'react';
+// @ts-ignore
+import * as pedigreejsModule from "./pedigreejs.es.v3.0.0-rc8";
+const { pedigreejs, pedigreejs_zooming, pedigreejs_pedcache, pedigreejs_io, pedigreejs_utils } = pedigreejsModule;
 import { PersonEditDialog, PedigreeControls } from './components';
+
+// Type definitions
+interface PersonData {
+	id: string;
+	name?: string;
+	sex: 'M' | 'F' | 'U';
+	isTarget?: boolean;
+	fatherId?: string | null;
+	motherId?: string | null;
+	age?: number | null;
+	yearOfBirth?: number | null;
+	isDead?: boolean;
+	isMonozygoticTwin?: boolean;
+	isDizygoticTwin?: boolean;
+	diseases?: Record<string, number>;
+	geneticTests?: Record<string, string>;
+	isAshkenazi?: boolean;
+}
+
+interface DiseaseConfig {
+	type: string;
+	colour: string;
+}
+
+interface PedigreeOptions {
+	targetDiv: string;
+	btn_target: string;
+	width: number;
+	height: number;
+	symbol_size: number;
+	font_size: string;
+	edit: boolean;
+	showWidgets: boolean;
+	zoomIn: number;
+	zoomOut: number;
+	zoomSrc: string[];
+	labels: string[][];
+	diseases: DiseaseConfig[];
+	DEBUG: boolean;
+	onPersonEdit: (person: any) => void;
+	dataset?: any;
+}
 
 // Person class to represent individuals in the pedigree
 class Person {
+	id: string;
+	name: string;
+	sex: 'M' | 'F' | 'U';
+	isTarget: boolean;
+	fatherId: string | null;
+	motherId: string | null;
+	age: number | null;
+	yearOfBirth: number | null;
+	isDead: boolean;
+	isMonozygoticTwin: boolean;
+	isDizygoticTwin: boolean;
+	diseases: Record<string, number>;
+	geneticTests: Record<string, string>;
+	isAshkenazi: boolean;
+
 	constructor({
 		id,
 		name,
@@ -22,11 +81,11 @@ class Person {
 		diseases = {},
 		geneticTests = {},
 		isAshkenazi = false
-	}) {
+	}: PersonData) {
 		console.log("Creating Person:", id, isTarget, name);
 		this.id = id;
-		this.name = name;
-		this.sex = sex; // 'M', 'F', or 'U'
+		this.name = name || '';
+		this.sex = sex;
 		this.isTarget = isTarget;
 		this.fatherId = fatherId;
 		this.motherId = motherId;
@@ -35,13 +94,13 @@ class Person {
 		this.isDead = isDead;
 		this.isMonozygoticTwin = isMonozygoticTwin;
 		this.isDizygoticTwin = isDizygoticTwin;
-		this.diseases = diseases; // { breast_cancer: 55, prostate_cancer: 71, etc. }
-		this.geneticTests = geneticTests; // { BRCA1: 'N', BRCA2: 'P', etc. }
+		this.diseases = diseases;
+		this.geneticTests = geneticTests;
 		this.isAshkenazi = isAshkenazi;
 	}
 
 	// Convert to CanRisk format for PedigreeJS
-	toCanRiskFormat(familyId = 'XFAM') {
+	toCanRiskFormat(familyId: string = 'XFAM'): string {
 		const data = {
 			familyId: familyId,
 			target: this.isTarget ? 1 : 0,
@@ -71,8 +130,7 @@ class Person {
 			pathology: '0:0:0:0:0' // Pathology results (ER:PR:HER2:CK14:CK56)
 		};
 		console.log("Converting to CanRisk format:", data);
-		var rawData = 
-		[
+		const rawData = [
 			data.familyId,    // FamID
 			data.name,        // Name (display name)
 			data.target,      // Target (proband flag)
@@ -105,7 +163,7 @@ class Person {
 		return rawData.join('\t');
 	}
 
-	formatGeneticTest(testName) {
+	formatGeneticTest(testName: string): string {
 		const result = this.geneticTests[testName];
 		if (!result) return '0:0';
 		
@@ -117,7 +175,7 @@ class Person {
 	}
 }
 
-const createFamilyData = () => {
+const createFamilyData = (): Person[] => {
 	return [
 		new Person({
 			id: 'parent1',
@@ -146,7 +204,7 @@ const createFamilyData = () => {
 };
 
 // Convert family data to CanRisk format
-const generateCanRiskData = (familyData) => {
+const generateCanRiskData = (familyData: Person[]): string => {
 	const header = "##CanRisk 3.0\n##FamID\tName\tTarget\tIndivID\tFathID\tMothID\tSex\tMZtwin\tDead\tAge\tYob\tBC1\tBC2\tOC\tPRO\tPAN\tAshkn\tBRCA1\tBRCA2\tPALB2\tATM\tCHEK2\tBARD1\tRAD51D\tRAD51C\tBRIP1\tER:PR:HER2:CK14:CK56";
 	const rows = familyData.map(person => person.toCanRiskFormat()).join('\n');
 	const canRiskData = `${header}\n${rows}`;
@@ -154,15 +212,14 @@ const generateCanRiskData = (familyData) => {
 	return canRiskData;
 };
 
-export const PedigreeJS = () => {
-	const [dialogOpen, setDialogOpen] = useState(false);
-	const [selectedPerson, setSelectedPerson] = useState(null);
-	const [validationError, setValidationError] = useState(null);
-	const [rollbackMessage, setRollbackMessage] = useState(null);
+export const PedigreeJS = (): JSX.Element => {
+	const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+	const [selectedPerson, setSelectedPerson] = useState<any>(null);
+	const [validationError] = useState<string | null>(null);
 
 	const w = window.innerWidth;
 	const h = window.innerHeight;
-	const opts = {
+	const opts: PedigreeOptions = {
 		'targetDiv': 'pedigreejs',
 		'btn_target': 'pedigree_history',
 		'width': (w > 1800 ? 1700: w - 50),
@@ -181,31 +238,31 @@ export const PedigreeJS = () => {
 						{'type': 'pancreatic_cancer', 'colour': '#4289BA'},
 						{'type': 'prostate_cancer', 'colour': '#D5494A'}],
 		'DEBUG': false,
-		'onPersonEdit': (person) => {
+		'onPersonEdit': (person: any) => {
 			setSelectedPerson(person);
 			setDialogOpen(true);
 		}
 	};
 
-	React.useEffect(() => {
+	useEffect(() => {
 		// Store the edit handler globally so pedigreejs can access it
-		window.reactEditHandler = opts.onPersonEdit;
+		(window as any).reactEditHandler = opts.onPersonEdit;
 		
 		// Expose pedigreejs functions globally for the React controls
-		window.pedigreejs = pedigreejs;
-		window.pedigreejs_zooming = pedigreejs_zooming;
-		window.pedigreejs_pedcache = pedigreejs_pedcache;
-		window.pedigreejs_io = pedigreejs_io;
-		window.pedigreejs_utils = pedigreejs_utils;
+		(window as any).pedigreejs = pedigreejs;
+		(window as any).pedigreejs_zooming = pedigreejs_zooming;
+		(window as any).pedigreejs_pedcache = pedigreejs_pedcache;
+		(window as any).pedigreejs_io = pedigreejs_io;
+		(window as any).pedigreejs_utils = pedigreejs_utils;
 		
 		// Ensure D3 is available globally (it should be available from pedigreejs)
-		if (typeof window.d3 === 'undefined' && typeof d3 !== 'undefined') {
-			window.d3 = d3;
+		if (typeof (window as any).d3 === 'undefined' && typeof (window as any).d3 !== 'undefined') {
+			(window as any).d3 = (window as any).d3;
 		}
 		
 		// Ensure jQuery is available and wait for it to be loaded
 		const checkJQuery = () => {
-			if (typeof window.$ !== 'undefined' && typeof window.$.fn.dialog !== 'undefined') {
+			if (typeof (window as any).$ !== 'undefined' && typeof (window as any).$.fn.dialog !== 'undefined') {
 				showPedigree(opts);
 			} else {
 				setTimeout(checkJQuery, 100);
@@ -231,7 +288,7 @@ export const PedigreeJS = () => {
 			console.log(JSON.stringify(opts.dataset, null, 2));
 			
 			// Check each person's parent relationships
-			opts.dataset.forEach((person, index) => {
+			opts.dataset?.forEach((person: any, index: number) => {
 				console.log(`Person ${index}:`, {
 					name: person.name,
 					father: person.father,
@@ -281,16 +338,16 @@ export const PedigreeJS = () => {
 				onClose={() => setDialogOpen(false)}
 				person={selectedPerson}
 				diseases={opts.diseases}
-				onSave={(updatedData) => {
+				onSave={(updatedData: any) => {
 					console.log("Saving person data:", updatedData);
 					
 					// Find the person in the dataset and update their data
 					if (selectedPerson && opts.dataset) {
-						const personIndex = opts.dataset.findIndex(p => p.name === selectedPerson.data.name);
+						const personIndex = opts.dataset.findIndex((p: any) => p.name === selectedPerson.data.name);
 						if (personIndex !== -1) {
 							// Filter out properties that shouldn't be updated (internal pedigreejs properties)
 							const disallowed = ["id", "name", "parent_node", "children", "parent", "depth", "height", "x", "y"];
-							const filteredData = {};
+							const filteredData: any = {};
 							for (const key in updatedData) {
 								if (disallowed.indexOf(key) === -1) {
 									filteredData[key] = updatedData[key];
@@ -306,8 +363,8 @@ export const PedigreeJS = () => {
 							console.log("Updated person in dataset:", opts.dataset[personIndex]);
 							
 							// Trigger pedigree rebuild to reflect changes (this will also update the cache)
-							if (typeof window.$ !== 'undefined') {
-								$(document).trigger('rebuild', [opts]);
+							if (typeof (window as any).$ !== 'undefined') {
+								((window as any).$ as any)(document).trigger('rebuild', [opts]);
 							} else {
 								// Fallback if jQuery is not available
 								pedigreejs.rebuild(opts);
@@ -326,7 +383,7 @@ export const PedigreeJS = () => {
 };
 
 /** Show pedigreejs **/
-const showPedigree = (opts) => {
+const showPedigree = (opts: PedigreeOptions): void => {
 	const p = document.getElementById("pedigreejs");
 	const ped = document.getElementById("pedigree");
 	if(!p && ped){
@@ -336,10 +393,10 @@ const showPedigree = (opts) => {
 		pedigreejs_load(opts);
 	}
 	const refresh = document.getElementsByClassName("fa-refresh");
-	if(refresh) refresh[0].style.display = "none";
+	if(refresh) (refresh[0] as HTMLElement).style.display = "none";
 }
 
-const pedigreejs_load = (opts) => {
+const pedigreejs_load = (opts: PedigreeOptions): void => {
 	try {
 		pedigreejs.rebuild(opts);
 		// Only try scaling if rebuild was successful
@@ -349,7 +406,7 @@ const pedigreejs_load = (opts) => {
 			console.warn("Scaling failed, but pedigree should still be visible:", scalingError);
 		}
 	} catch(e) {
-		let msg;
+		let msg: string;
 		if (typeof e === "string") {
 			msg = e.toUpperCase();
 		} else if (e instanceof Error) {
@@ -372,4 +429,4 @@ const pedigreejs_load = (opts) => {
 			`;
 		}
 	}
-};
+}; 

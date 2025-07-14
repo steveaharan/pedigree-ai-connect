@@ -5,7 +5,7 @@
 import { PedigreeJS } from "./PedigreeJS_fixed";
 import './App.css'
 
-function App() {
+function App(): JSX.Element {
 	return (
 		<>
 		<PedigreeJS/>
@@ -13,4 +13,4 @@ function App() {
 	)
 }
 
-export default App
+export default App 

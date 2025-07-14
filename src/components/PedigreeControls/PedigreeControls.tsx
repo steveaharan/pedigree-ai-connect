@@ -7,18 +7,42 @@ import React, { useState, useEffect } from 'react';
 import './PedigreeControls.css';
 import ConfirmationDialog from '../ConfirmationDialog';
 
-const PedigreeControls = ({ opts }) => {
-	const [canUndo, setCanUndo] = useState(false);
-	const [canRedo, setCanRedo] = useState(false);
-	const [zoomLevel, setZoomLevel] = useState(1);
-	const [isVisible, setIsVisible] = useState(true);
-	const [isFullscreen, setIsFullscreen] = useState(false);
-	const [isDragging, setIsDragging] = useState(false);
-	const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-	const [showResetConfirm, setShowResetConfirm] = useState(false);
+interface PedigreeControlsProps {
+	opts: any;
+}
+
+interface Position {
+	x: number;
+	y: number;
+}
+
+interface DragOffset {
+	x: number;
+	y: number;
+}
+
+// Extend Window interface for global variables
+declare global {
+	interface Window {
+		$: any;
+		pedigreejs_zooming: any;
+		pedigreejs_pedcache: any;
+		d3: any;
+	}
+}
+
+const PedigreeControls: React.FC<PedigreeControlsProps> = ({ opts }) => {
+	const [canUndo, setCanUndo] = useState<boolean>(false);
+	const [canRedo, setCanRedo] = useState<boolean>(false);
+	const [zoomLevel, setZoomLevel] = useState<number>(1);
+	const [isVisible, setIsVisible] = useState<boolean>(true);
+	const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+	const [isDragging, setIsDragging] = useState<boolean>(false);
+	const [dragOffset, setDragOffset] = useState<DragOffset>({ x: 0, y: 0 });
+	const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 	
 	// Load position from localStorage or use default
-	const [position, setPosition] = useState(() => {
+	const [position, setPosition] = useState<Position>(() => {
 		try {
 			const savedPosition = localStorage.getItem('pedigree-controls-position');
 			if (savedPosition) {
@@ -65,8 +89,8 @@ const PedigreeControls = ({ opts }) => {
 			});
 			
 			// Keyboard shortcuts
-			const handleKeyboard = (e) => {
-				if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+			const handleKeyboard = (e: KeyboardEvent) => {
+				if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 				
 				if (e.ctrlKey || e.metaKey) {
 					switch(e.key) {
@@ -157,8 +181,8 @@ const PedigreeControls = ({ opts }) => {
 	};
 
 	const updateFullscreenState = () => {
-		const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement || 
-					   document.mozFullScreenElement || document.msFullscreenElement);
+		const isFS = !!(document.fullscreenElement || (document as any).webkitFullscreenElement || 
+					   (document as any).mozFullScreenElement || (document as any).msFullscreenElement);
 		setIsFullscreen(isFS);
 	};
 
@@ -280,24 +304,24 @@ const PedigreeControls = ({ opts }) => {
 		try {
 			const target = document.getElementById(opts.targetDiv);
 			if (!isFullscreen) {
-				if (target.requestFullscreen) {
+				if (target?.requestFullscreen) {
 					target.requestFullscreen();
-				} else if (target.mozRequestFullScreen) {
-					target.mozRequestFullScreen();
-				} else if (target.webkitRequestFullscreen) {
-					target.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-				} else if (target.msRequestFullscreen) {
-					target.msRequestFullscreen();
+				} else if ((target as any)?.mozRequestFullScreen) {
+					(target as any).mozRequestFullScreen();
+				} else if ((target as any)?.webkitRequestFullscreen) {
+					(target as any).webkitRequestFullscreen((Element as any).ALLOW_KEYBOARD_INPUT);
+				} else if ((target as any)?.msRequestFullscreen) {
+					(target as any).msRequestFullscreen();
 				}
 			} else {
 				if (document.exitFullscreen) {
 					document.exitFullscreen();
-				} else if (document.msExitFullscreen) {
-					document.msExitFullscreen();
-				} else if (document.mozCancelFullScreen) {
-					document.mozCancelFullScreen();
-				} else if (document.webkitExitFullscreen) {
-					document.webkitExitFullscreen();
+				} else if ((document as any).msExitFullscreen) {
+					(document as any).msExitFullscreen();
+				} else if ((document as any).mozCancelFullScreen) {
+					(document as any).mozCancelFullScreen();
+				} else if ((document as any).webkitExitFullscreen) {
+					(document as any).webkitExitFullscreen();
 				}
 			}
 		} catch (error) {
@@ -324,8 +348,8 @@ const PedigreeControls = ({ opts }) => {
 	};
 
 	// Drag functionality
-	const handleMouseDown = (e) => {
-		if (e.target.closest('.control-button')) return; // Don't drag when clicking buttons
+	const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+		if ((e.target as HTMLElement).closest('.control-button')) return; // Don't drag when clicking buttons
 		
 		setIsDragging(true);
 		const rect = e.currentTarget.getBoundingClientRect();
@@ -336,7 +360,7 @@ const PedigreeControls = ({ opts }) => {
 		e.preventDefault();
 	};
 
-	const handleMouseMove = (e) => {
+	const handleMouseMove = (e: MouseEvent) => {
 		if (!isDragging) return;
 		
 		const newX = e.clientX - dragOffset.x;
@@ -357,8 +381,8 @@ const PedigreeControls = ({ opts }) => {
 	};
 
 	// Touch support for mobile devices
-	const handleTouchStart = (e) => {
-		if (e.target.closest('.control-button')) return;
+	const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+		if ((e.target as HTMLElement).closest('.control-button')) return;
 		
 		const touch = e.touches[0];
 		setIsDragging(true);
@@ -370,7 +394,7 @@ const PedigreeControls = ({ opts }) => {
 		e.preventDefault();
 	};
 
-	const handleTouchMove = (e) => {
+	const handleTouchMove = (e: TouchEvent) => {
 		if (!isDragging) return;
 		
 		const touch = e.touches[0];
@@ -597,4 +621,4 @@ const PedigreeControls = ({ opts }) => {
 	);
 };
 
-export default PedigreeControls;
+export default PedigreeControls; 
