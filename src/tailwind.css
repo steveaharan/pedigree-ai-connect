@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ...existing code... */
+body {
+	margin: 0;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #fff;
+}
+
+.header {
+  background-color: #DDD1C1;
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 20px;
+  padding: 2rem;
+}
+
+/* ...existing code... */
