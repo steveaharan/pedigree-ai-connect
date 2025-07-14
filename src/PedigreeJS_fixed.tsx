@@ -11,6 +11,7 @@ import { PersonEditDialog, PedigreeControls } from './components';
 interface PersonData {
 	id: string;
 	name?: string;
+	display_name?: string;
 	sex: 'M' | 'F' | 'U';
 	isTarget?: boolean;
 	fatherId?: string | null;
@@ -215,7 +216,8 @@ const generateCanRiskData = (familyData: Person[]): string => {
 export const PedigreeJS = (): JSX.Element => {
 	const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 	const [selectedPerson, setSelectedPerson] = useState<any>(null);
-	const [validationError] = useState<string | null>(null);
+	const [validationError, setValidationError] = useState<string | null>(null);
+	const [rollbackMessage, setRollbackMessage] = useState<string | null>(null);
 
 	const w = window.innerWidth;
 	const h = window.innerHeight;
@@ -260,15 +262,76 @@ export const PedigreeJS = (): JSX.Element => {
 			(window as any).d3 = (window as any).d3;
 		}
 		
+		// Listen for validation errors and rollback events
+		const handleValidationError = (error: any, opts?: any) => {
+			console.log('Validation error received:', error);
+			
+			// Extract the actual error message from the error object
+			let errorMessage = '';
+			if (error && typeof error === 'object') {
+				// The error might be the first argument, or it might be nested
+				if (error.message) {
+					errorMessage = error.message;
+				} else if (error.toString && error.toString() !== '[object Object]') {
+					errorMessage = error.toString();
+				} else {
+					// Try to find the error message in the arguments
+					errorMessage = 'Validation failed. Please check your pedigree data.';
+				}
+			} else if (typeof error === 'string') {
+				errorMessage = error;
+			} else {
+				errorMessage = 'Validation failed. Please check your pedigree data.';
+			}
+			
+			// If we still don't have a meaningful message, try to extract from console logs
+			if (errorMessage === 'Validation failed. Please check your pedigree data.' && error) {
+				console.log('Full error object for debugging:', error);
+				// Try to get the actual error message from the pedigreejs error
+				if (error.target && error.target.textContent) {
+					errorMessage = error.target.textContent;
+				}
+			}
+			
+			setValidationError(errorMessage);
+			
+			// Auto-clear validation error after 5 seconds
+			setTimeout(() => {
+				setValidationError(null);
+			}, 5000);
+		};
+		
+		const handleRollbackSuccess = (opts: any) => {
+			console.log('Rollback completed successfully');
+			setRollbackMessage('Pedigree restored to previous state');
+			
+			// Auto-clear rollback message after 3 seconds
+			setTimeout(() => {
+				setRollbackMessage(null);
+			}, 3000);
+		};
+		
 		// Ensure jQuery is available and wait for it to be loaded
 		const checkJQuery = () => {
 			if (typeof (window as any).$ !== 'undefined' && typeof (window as any).$.fn.dialog !== 'undefined') {
+				// Add event listeners for validation and rollback
+				(window as any).$(document).on('validation_error', handleValidationError);
+				(window as any).$(document).on('rollback_success', handleRollbackSuccess);
+				
 				showPedigree(opts);
 			} else {
 				setTimeout(checkJQuery, 100);
 			}
 		};
 		checkJQuery();
+		
+		// Cleanup function
+		return () => {
+			if (typeof (window as any).$ !== 'undefined') {
+				(window as any).$(document).off('validation_error', handleValidationError);
+				(window as any).$(document).off('rollback_success', handleRollbackSuccess);
+			}
+		};
 	}, []);
 
 	const local_dataset = pedigreejs_pedcache.current(opts);
@@ -332,6 +395,26 @@ export const PedigreeJS = (): JSX.Element => {
 				</div>
 			)}
 			
+			{/* Rollback success notification */}
+			{rollbackMessage && (
+				<div style={{
+					position: 'fixed',
+					top: '20px',
+					right: '20px',
+					background: '#d4edda',
+					border: '1px solid #c3e6cb',
+					borderRadius: '5px',
+					padding: '15px',
+					boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+					zIndex: 10000,
+					maxWidth: '400px',
+					color: '#155724'
+				}}>
+					<strong>✅ Success:</strong><br/>
+					{rollbackMessage}
+				</div>
+			)}
+			
 			{/* React Dialog */}
 			<PersonEditDialog
 				isOpen={dialogOpen}
@@ -345,6 +428,9 @@ export const PedigreeJS = (): JSX.Element => {
 					if (selectedPerson && opts.dataset) {
 						const personIndex = opts.dataset.findIndex((p: any) => p.name === selectedPerson.data.name);
 						if (personIndex !== -1) {
+							// Backup the original data before making changes
+							const originalData = { ...opts.dataset[personIndex] };
+							
 							// Filter out properties that shouldn't be updated (internal pedigreejs properties)
 							const disallowed = ["id", "name", "parent_node", "children", "parent", "depth", "height", "x", "y"];
 							const filteredData: any = {};
@@ -364,10 +450,60 @@ export const PedigreeJS = (): JSX.Element => {
 							
 							// Trigger pedigree rebuild to reflect changes (this will also update the cache)
 							if (typeof (window as any).$ !== 'undefined') {
+								// Listen for validation errors and rollback if needed
+								const handleValidationError = (error: any, errorOpts?: any) => {
+									console.log('Validation failed, rolling back changes');
+									
+									// Safely restore original data using the correct opts reference
+									if (opts.dataset && personIndex >= 0 && personIndex < opts.dataset.length) {
+										opts.dataset[personIndex] = originalData;
+										console.log('Restored original data:', originalData);
+									}
+									
+									// Remove the event listener first
+									((window as any).$ as any)(document).off('validation_error', handleValidationError);
+									
+									// Ensure dataset is valid before rebuilding
+									if (!opts.dataset || !Array.isArray(opts.dataset)) {
+										console.error('Dataset is invalid after rollback, cannot rebuild');
+										return;
+									}
+									
+									// Trigger rebuild with original data after a short delay to ensure cleanup
+									setTimeout(() => {
+										try {
+											console.log('Triggering rebuild with restored data');
+											((window as any).$ as any)(document).trigger('rebuild', [opts]);
+										} catch (rebuildError) {
+											console.error('Failed to trigger rebuild after rollback:', rebuildError);
+										}
+									}, 100);
+								};
+								
+								// Add temporary validation error listener
+								((window as any).$ as any)(document).one('validation_error', handleValidationError);
+								
+								// Trigger rebuild
 								((window as any).$ as any)(document).trigger('rebuild', [opts]);
 							} else {
 								// Fallback if jQuery is not available
-								pedigreejs.rebuild(opts);
+								try {
+									pedigreejs.rebuild(opts);
+								} catch (error) {
+									console.error('Rebuild failed, rolling back changes');
+									// Safely restore original data
+									if (opts.dataset && personIndex >= 0 && personIndex < opts.dataset.length) {
+										opts.dataset[personIndex] = originalData;
+										console.log('Restored original data (fallback):', originalData);
+									}
+									// Try rebuild again with original data
+									try {
+										console.log('Triggering fallback rebuild with restored data');
+										pedigreejs.rebuild(opts);
+									} catch (rebuildError) {
+										console.error('Failed to rebuild after rollback:', rebuildError);
+									}
+								}
 							}
 						} else {
 							console.error("Person not found in dataset for update");
