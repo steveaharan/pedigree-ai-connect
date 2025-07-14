@@ -1,0 +1,70 @@
+/**
+/* © 2024 University of Cambridge. All rights reserved.  
+**/
+body {
+	margin: 0;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #fff;
+}
+
+.header {
+  background-color: #DDD1C1;
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 20px;
+  padding: 2rem;
+}
+
+.container {
+  width: 90%;
+  max-width: 1140px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+#pedigree, #pedigree_history {
+	text-align: center;
+}
+
+
+.container span {
+	font-size: 2em;
+	font-weight: bold;
+	margin: 0.2em;
+	display: flex; 
+    justify-content: center
+}
+
+p {
+  margin: 1rem 4rem;
+  max-width: 800px;
+  text-align: left;
+}
+
+a.button {
+  color: #fff;
+  background-color: #337ab7;
+  border-color: #2e6da4;
+  padding: 10px 16px;
+  font-size: 18px;
+  line-height: 1.3333333;
+  border-radius: 6px;
+  text-decoration: none;
+  margin-right: 2rem;
+}
+
+.fa.fg-grey {
+	color: grey;
+}
+.popup_selection, .addpartner, .addparents, .delete, .settings {
+	cursor: pointer;
+}
+.addsibling, .addchild {
+	cursor: default;
+}
+.p-2 { padding: 0.5em; }
+.pe-2 { padding-right: 0.75em; }
+svg {overflow:hidden}

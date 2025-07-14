@@ -1,0 +1,15 @@
+
+// Check if nodes exist and what widgets they have
+console.log('=== DOM INSPECTION ===');
+console.log('Parent3 widgets:', $('[id="parent3"] .ped_widgets .widget').map(function() { return this.className; }).get());
+console.log('Parent4 widgets:', $('[id="parent4"] .ped_widgets .widget').map(function() { return this.className; }).get());
+console.log('Child7 widgets:', $('[id="child7"] .ped_widgets .widget').map(function() { return this.className; }).get());
+
+// Check parent_node property
+console.log('=== DATASET INSPECTION ===');
+if (window.opts && window.opts.dataset) {
+  window.opts.dataset.forEach(person => {
+    console.log(`${person.name}: father=${person.father}, mother=${person.mother}, parent_node=${person.parent_node ? 'YES' : 'NO'}`);
+  });
+}
+

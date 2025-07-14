@@ -1,0 +1,437 @@
+/* Dragging states */
+.pedigree-controls.dragging {
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	transform: scale(1.02);
+	transition: none; /* Disable transitions while dragging */
+}
+
+.pedigree-controls:not(.dragging) {
+	transition: all 0.2s ease; /* Smooth transitions when not dragging */
+}
+
+.pedigree-controls {
+	cursor: grab;
+}
+
+.pedigree-controls:active {
+	cursor: grabbing;
+}
+
+.pedigree-controls.dragging {
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+	transform: scale(1.02);
+	transition: none;
+}
+
+.pedigree-controls.dragging .controls-header {
+	background: rgba(74, 144, 226, 0.1);
+	border-radius: 4px;
+}
+
+/* Prevent text selection while dragging */
+.pedigree-controls.dragging * {
+	user-select: none !important;
+	pointer-events: none;
+}
+
+/* Re-enable pointer events for buttons */
+.pedigree-controls.dragging .control-button {
+	pointer-events: auto;
+}
+
+.control-button.minimize-button,
+.control-button.expand-button,
+.control-button.reset-position-button {
+	padding: 4px 6px;
+	min-width: 24px;
+	border: none;
+	background: transparent;
+	color: #666;
+	font-size: 14px;
+	box-shadow: none;
+}
+
+.control-button.minimize-button:hover,
+.control-button.expand-button:hover,
+.control-button.reset-position-button:hover {
+	background: #f0f0f0;
+	color: #333;
+	transform: none;
+	box-shadow: none;
+}
+
+.pedigree-controls {
+	cursor: grab;
+}
+
+.pedigree-controls:active {
+	cursor: grabbing;
+}
+
+.pedigree-controls.dragging .controls-header {
+	background: rgba(74, 144, 226, 0.1);
+	border-radius: 4px;
+}
+
+/* Prevent text selection while dragging */
+.pedigree-controls.dragging * {
+	user-select: none !important;
+	pointer-events: none;
+}
+
+/* Re-enable pointer events for buttons */
+.pedigree-controls.dragging .control-button {
+	pointer-events: auto;
+}
+
+/* Visual feedback for drag handle */
+.controls-header {
+	cursor: grab;
+	position: relative;
+}
+
+.controls-header:active {
+	cursor: grabbing;
+}
+
+.controls-header::before {
+	content: '⋮⋮';
+	position: absolute;
+	left: -8px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #ccc;
+	font-size: 14px;
+	line-height: 0.5;
+	letter-spacing: -2px;
+	opacity: 0.6;
+	transition: opacity 0.2s ease;
+}
+
+.pedigree-controls:hover .controls-header::before {
+	opacity: 1;
+	color: #999;
+}
+
+/* Hide legacy pedigree buttons since we're using React controls */
+#pedigree_history {
+	display: none !important;
+}
+
+/* Hide legacy button elements that might be added to the page */
+.fa-undo, .fa-redo, .fa-refresh, .fa-crosshairs, 
+.fa-file-image, .fa-arrows-alt, .fa-plus-circle, 
+.fa-minus-circle {
+	display: none !important;
+}
+
+/* But allow them in our React controls */
+.pedigree-controls .fa-undo,
+.pedigree-controls .fa-redo,
+.pedigree-controls .fa-refresh,
+.pedigree-controls .fa-crosshairs,
+.pedigree-controls .fa-file-image,
+.pedigree-controls .fa-arrows-alt,
+.pedigree-controls .fa-plus-circle,
+.pedigree-controls .fa-minus-circle {
+	display: inline !important;
+}
+
+/**
+ * Styles for PedigreeControls React component
+ * Replaces legacy jQuery pedigree button styling
+ * © 2024 University of Cambridge. All rights reserved.
+ */
+
+.pedigree-controls {
+	position: fixed;
+	top: 20px;
+	left: 20px;
+	background: rgba(255, 255, 255, 0.96);
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+	padding: 16px;
+	z-index: 100; /* Reduced z-index to avoid interfering with pedigree */
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+	font-size: 14px;
+	backdrop-filter: blur(10px);
+	min-width: 220px;
+	user-select: none;
+	pointer-events: auto; /* Only the controls themselves should capture pointer events */
+}
+
+.pedigree-controls.minimized {
+	padding: 8px;
+	min-width: auto;
+}
+
+.controls-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+	cursor: grab;
+	position: relative;
+}
+
+.controls-header:active {
+	cursor: grabbing;
+}
+
+.header-buttons {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+
+.control-button.reset-position-button {
+	padding: 4px 6px;
+	min-width: 24px;
+	border: none;
+	background: transparent;
+	color: #666;
+	font-size: 12px;
+	box-shadow: none;
+}
+
+.controls-title {
+	font-weight: 600;
+	color: #333;
+	font-size: 14px;
+	cursor: help;
+}
+
+.controls-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.controls-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.controls-label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #666;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-bottom: 2px;
+}
+
+.button-group {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.control-button {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 12px;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	background: #fff;
+	color: #333;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	transition: all 0.2s ease;
+	outline: none;
+	white-space: nowrap;
+	min-height: 32px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.control-button:hover:not(.disabled) {
+	background: #f8f9fa;
+	border-color: #999;
+	transform: translateY(-1px);
+	box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.control-button:active:not(.disabled) {
+	transform: translateY(0);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	background: #f0f0f0;
+}
+
+.control-button.disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+	background: #f5f5f5;
+	color: #999;
+	border-color: #ddd;
+}
+
+.control-button.disabled:hover {
+	transform: none;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.control-button.reset-button {
+	border-color: #dc3545;
+	color: #dc3545;
+}
+
+.control-button.reset-button:hover:not(.disabled) {
+	background: #dc3545;
+	color: white;
+	border-color: #c82333;
+}
+
+.control-button.minimize-button,
+.control-button.expand-button {
+	padding: 6px 8px;
+	min-width: 28px;
+	border: none;
+	background: transparent;
+	color: #666;
+	font-size: 16px;
+	box-shadow: none;
+}
+
+.control-button.minimize-button:hover,
+.control-button.expand-button:hover {
+	background: #f0f0f0;
+	color: #333;
+	transform: none;
+	box-shadow: none;
+}
+
+.control-button.expand-button {
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(255, 255, 255, 0.95);
+	border: 1px solid #ddd;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	font-size: 18px;
+}
+
+.control-icon {
+	font-size: 16px;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 16px;
+}
+
+.control-text {
+	font-size: 11px;
+	font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.pedigree-controls {
+		top: 10px;
+		left: 10px;
+		min-width: 200px;
+		padding: 12px;
+	}
+	
+	.control-button {
+		padding: 6px 10px;
+		font-size: 11px;
+		min-height: 30px;
+	}
+	
+	.control-text {
+		font-size: 10px;
+	}
+	
+	.controls-section {
+		gap: 12px;
+	}
+	
+	.controls-group {
+		gap: 6px;
+	}
+}
+
+/* Animation for show/hide */
+.pedigree-controls {
+	animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateX(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+/* Focus styles for accessibility */
+.control-button:focus {
+	box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+	border-color: #4a90e2;
+}
+
+.control-button:focus:not(.disabled) {
+	outline: none;
+}
+
+/* Enhanced hover effects */
+.controls-group:hover .controls-label {
+	color: #333;
+	transition: color 0.2s ease;
+}
+
+/* Special styling for zoom controls */
+.controls-group .button-group .control-button:first-child:has(.control-icon:contains('+')) {
+	border-radius: 6px 3px 3px 6px;
+	border-right-width: 0;
+}
+
+.controls-group .button-group .control-button:nth-child(2):has(.control-icon:contains('−')) {
+	border-radius: 3px;
+	border-right-width: 0;
+	border-left-width: 0;
+	margin-left: 1px;
+	margin-right: 1px;
+}
+
+/* Status indicators */
+.controls-label {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.controls-label::after {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #28a745;
+	opacity: 0.7;
+	margin-left: 8px;
+}
+
+.controls-group:has(.disabled) .controls-label::after {
+	background: #6c757d;
+}
+
+/* Hover state for entire control groups */
+.controls-group:hover {
+	background: rgba(248, 249, 250, 0.5);
+	border-radius: 4px;
+	margin: -4px;
+	padding: 4px;
+}
