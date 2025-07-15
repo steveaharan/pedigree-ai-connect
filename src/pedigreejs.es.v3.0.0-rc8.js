@@ -4702,21 +4702,21 @@ function rebuild(opts) {
 		}
 		
 		// Create appropriate error message based on context
-		let contextMessage = 'Please check your pedigree data and try again.';
+		let contextMessage = errorMessage;
 		if (isRollback) {
 			contextMessage = 'Critical error: Unable to restore previous pedigree state. Please refresh the page.';
 		}
 		
 		// Always show an error message in the pedigree area to prevent blank page
-		$("#"+opts.targetDiv).html(`
-			<div style="padding:20px;color:#721c24;background:#f8d7da;border:1px solid #f5c6cb;margin:10px;border-radius:5px;font-family:Arial,sans-serif;">
-				<strong>⚠️ ${isRollback ? 'Rollback Failed' : 'Error Building Pedigree'}:</strong><br>
-				<div style="margin-top:8px;">${errorMessage}</div>
-				<div style="margin-top:12px;font-size:0.9em;color:#6c757d;">
-					${contextMessage}
-				</div>
-			</div>
-		`);
+		// $("#"+opts.targetDiv).html(`
+		// 	<div style="padding:20px;color:#721c24;background:#f8d7da;border:1px solid #f5c6cb;margin:10px;border-radius:5px;font-family:Arial,sans-serif;">
+		// 		<strong>⚠️ ${isRollback ? 'Rollback Failed' : 'Error Building Pedigree'}:</strong><br>
+		// 		<div style="margin-top:8px;">${errorMessage}</div>
+		// 		<div style="margin-top:12px;font-size:0.9em;color:#6c757d;">
+		// 			${contextMessage}
+		// 		</div>
+		// 	</div>
+		// `);
 		
 		// Don't re-throw - we've handled the error
 		return;
