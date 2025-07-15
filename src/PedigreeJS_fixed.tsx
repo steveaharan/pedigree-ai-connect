@@ -263,42 +263,46 @@ export const PedigreeJS = (): JSX.Element => {
 		}
 		
 		// Listen for validation errors and rollback events
-		const handleValidationError = (error: any, opts?: any) => {
-			console.log('Validation error received:', error);
-			
-			// Extract the actual error message from the error object
+		const handleValidationError = (...args: any[]) => {
+			// Try to find a string or Error object in the arguments
 			let errorMessage = '';
-			if (error && typeof error === 'object') {
-				// The error might be the first argument, or it might be nested
-				if (error.message) {
-					errorMessage = error.message;
-				} else if (error.toString && error.toString() !== '[object Object]') {
-					errorMessage = error.toString();
-				} else {
-					// Try to find the error message in the arguments
-					errorMessage = 'Validation failed. Please check your pedigree data.';
+			for (const arg of args) {
+				if (!arg) continue;
+				if (typeof arg === 'string') {
+					errorMessage = arg;
+					break;
 				}
-			} else if (typeof error === 'string') {
-				errorMessage = error;
-			} else {
+				if (arg instanceof Error && arg.message) {
+					errorMessage = arg.message;
+					break;
+				}
+				if (typeof arg === 'object') {
+					if (arg.message) {
+						errorMessage = arg.message;
+						break;
+					}
+					if (arg.error) {
+						errorMessage = arg.error;
+						break;
+					}
+					if (arg.text) {
+						errorMessage = arg.text;
+						break;
+					}
+				}
+			}
+			// Fallback: try to grab from the DOM if PedigreeJS renders it
+			if (!errorMessage) {
+				const errorDisplay = document.querySelector('.pedigree-error, .error-message, [class*="error"]');
+				if (errorDisplay && errorDisplay.textContent) {
+					errorMessage = errorDisplay.textContent.trim();
+				}
+			}
+			if (!errorMessage) {
 				errorMessage = 'Validation failed. Please check your pedigree data.';
 			}
-			
-			// If we still don't have a meaningful message, try to extract from console logs
-			if (errorMessage === 'Validation failed. Please check your pedigree data.' && error) {
-				console.log('Full error object for debugging:', error);
-				// Try to get the actual error message from the pedigreejs error
-				if (error.target && error.target.textContent) {
-					errorMessage = error.target.textContent;
-				}
-			}
-			
 			setValidationError(errorMessage);
-			
-			// Auto-clear validation error after 5 seconds
-			setTimeout(() => {
-				setValidationError(null);
-			}, 5000);
+			setTimeout(() => setValidationError(null), 5000);
 		};
 		
 		const handleRollbackSuccess = (opts: any) => {
